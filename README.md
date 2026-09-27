@@ -60,7 +60,7 @@ Annotators may inspect only `runs/normalized/`. Do not open `runs/raw/` or
 `runs/index.jsonl` before annotation is complete; those files reveal condition
 and model.
 
-Each trial requires **two independent human annotations**:
+Each trial requires **two independent human annotations**. Condition/model metadata is withheld, but the treatment can leave recognizable traces in the model's own text; this is metadata masking, not guaranteed perfect blinding:
 
 ```text
 runs/annotations/
@@ -88,7 +88,7 @@ Then:
 distinct primary annotations and every disagreement has a resolution. Only
 after those checks pass does it read the raw envelopes and unblind. The output
 reports pre-adjudication raw agreement and Cohen's κ, plus FAPR stratified by
-**condition × requested model × fault bucket**.
+**condition × provider-reported model × fault bucket** when the reported model is stable across the trial. Requested identifiers remain in the scored record.
 
 ## Checking the claim graph
 
