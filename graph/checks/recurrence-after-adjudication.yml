@@ -1,0 +1,7 @@
+id: check/recurrence-after-adjudication
+type: Check
+title: Recurrence after adjudication
+context_tags:
+- ai-evaluation
+body: 'On correction scenarios: after a durable ruling rejects a proposition, how often does it reappear
+  as authoritative after resynthesis?'

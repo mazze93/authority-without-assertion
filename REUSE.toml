@@ -1,0 +1,19 @@
+# REUSE/SPDX licence map (https://reuse.software). Each path gets exactly one
+# licence. Raw model traces are deliberately NOT given a repository-wide licence:
+# each carries its own rights metadata (see LICENSES/LicenseRef-PerArtifact.txt).
+version = 1
+
+[[annotations]]
+path = ["src/**", "tests/**", "pyproject.toml", "REUSE.toml", ".gitignore", ".github/**"]
+SPDX-FileCopyrightText = "2026 Mazze LeCzzare Frazer"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ["README.md", "research.yaml", "preregistration.md", "protocol/**", "graph/**", "runs/annotations/**", "runs/scores/**", "paper/**", "docs/**"]
+SPDX-FileCopyrightText = "2026 Mazze LeCzzare Frazer"
+SPDX-License-Identifier = "CC-BY-4.0"
+
+[[annotations]]
+path = ["runs/raw/**", "runs/normalized/**", "runs/index.jsonl"]
+SPDX-FileCopyrightText = "NOASSERTION"
+SPDX-License-Identifier = "LicenseRef-PerArtifact"

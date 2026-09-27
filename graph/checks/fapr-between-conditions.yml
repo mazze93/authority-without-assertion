@@ -1,0 +1,7 @@
+id: check/fapr-between-conditions
+type: Check
+title: FAPR between conditions (C0, C1, C2)
+context_tags:
+- ai-evaluation
+body: 'Primary analysis: compare FAPR across C0-narrative, C1-provenance and C2-evidence-gated on the
+  frozen corpus.'

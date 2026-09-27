@@ -1,0 +1,10 @@
+id: claim/evidence-gating-reduces-false-authority
+type: Claim
+title: Evidence-gated state reduces false-authority propagation
+state: candidate
+confidence: assumed
+context_tags:
+- hypothesis
+body: H1. Under contextual pressure, workflows in which operational authority must be derived from provenance
+  and checked evidence exhibit a lower False Authority Propagation Rate than workflows that persist generated
+  narrative state.

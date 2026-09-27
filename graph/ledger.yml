@@ -1,0 +1,23 @@
+# The study's argument, append-only (Bearing format). Every hypothesis enters as
+# a candidate with its check attached but UNRUN: under ADR-0006 an unrun check
+# counts zero, so no claim here holds until a check is run and inspected.
+# Supports/contradicts relations are appended only after results are examined.
+
+frames:
+  experiment: [ai-evaluation]           # evidence produced by this study's own runs
+  hypothesis: {tags: [hypothesis], counts: false, note: "the study's own claims; provenance only"}
+
+epochs:
+  - {from: 1, name: "preregistration"}
+
+entries:
+  - {seq: 1,  date: "2026-09-27", type: assert-claim, claim: claim/narrative-persistence-propagates-false-authority, frame: hypothesis}
+  - {seq: 2,  date: "2026-09-27", type: add-evidence, to: claim/narrative-persistence-propagates-false-authority, rel: tested-by, from: check/pilot-base-rate, frame: experiment}
+  - {seq: 3,  date: "2026-09-27", type: assert-claim, claim: claim/evidence-gating-reduces-false-authority, frame: hypothesis}
+  - {seq: 4,  date: "2026-09-27", type: add-evidence, to: claim/evidence-gating-reduces-false-authority, rel: tested-by, from: check/fapr-between-conditions, frame: experiment}
+  - {seq: 5,  date: "2026-09-27", type: assert-claim, claim: claim/evidence-gating-preserves-constraints, frame: hypothesis}
+  - {seq: 6,  date: "2026-09-27", type: add-evidence, to: claim/evidence-gating-preserves-constraints, rel: tested-by, from: check/constraint-retention-between-conditions, frame: experiment}
+  - {seq: 7,  date: "2026-09-27", type: assert-claim, claim: claim/adjudication-reduces-recurrence, frame: hypothesis}
+  - {seq: 8,  date: "2026-09-27", type: add-evidence, to: claim/adjudication-reduces-recurrence, rel: tested-by, from: check/recurrence-after-adjudication, frame: experiment}
+  - {seq: 9,  date: "2026-09-27", type: assert-claim, claim: claim/evidence-gating-increases-escalation, frame: hypothesis}
+  - {seq: 10, date: "2026-09-27", type: add-evidence, to: claim/evidence-gating-increases-escalation, rel: tested-by, from: check/escalation-cost, frame: experiment}

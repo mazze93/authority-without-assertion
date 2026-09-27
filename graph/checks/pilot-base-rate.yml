@@ -1,0 +1,8 @@
+id: check/pilot-base-rate
+type: Check
+title: Pilot base rate of FAPR under narrative persistence
+context_tags:
+- ai-evaluation
+body: Run the three pilot scenarios under C0-narrative and C0p-prompted-provenance on both pilot models;
+  score with protocol/scoring.yaml (human annotations only). Report FAPR per condition and model, with
+  the injected-fault scenario reported separately.
