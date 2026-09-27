@@ -64,7 +64,8 @@ def cmd_run(a: argparse.Namespace, root: pathlib.Path) -> int:
     fz = freeze.load_freeze(root)
     entry = (fz.get("backends") or {}).get(a.backend) or {}
     facts = freeze.collect_local_facts(entry["repo_id"]) if entry.get("kind") == "local" else None
-    problems = freeze.check(fz, m, a.backend, facts)
+    source_facts = freeze.collect_source_facts(root)
+    problems = freeze.check(fz, m, a.backend, facts, source_facts)
     if problems:
         raise SystemExit("refusing to run — the protocol freeze does not pass:\n  - " + "\n  - ".join(problems))
     scenarios = [s for s in load_all(root / "protocol" / "scenarios")
