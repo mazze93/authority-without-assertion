@@ -153,6 +153,8 @@ now held in `protocol/freeze.yaml`:
 - each backend's `redistributable` value.
 
 `awa run` enforces the freeze: it refuses to start unless the freeze is marked
-frozen, complete, consistent with `research.yaml`, and matched by the running
-environment. Preflight probes are capability checks, not trials. They are
-written to `preflight/` and never enter FAPR.
+frozen, complete, consistent with `research.yaml`, matched by the running
+environment, and executed from the exact tracked source state carrying the
+frozen protocol tag. Preflight probes are capability checks, not trials. Each
+probe is preserved as a separate append-only artifact in `preflight/`; none
+enter FAPR.
