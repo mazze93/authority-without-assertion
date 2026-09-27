@@ -87,12 +87,7 @@ def cmd_preannotate(a: argparse.Namespace, root: pathlib.Path) -> int:
 
 
 def _primary_annotations(root: pathlib.Path, rule: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
-    """Load exactly the blinded primary annotations, grouped by trial.
-
-    Layout is runs/annotations/human/<annotator>/<trial_id>.yaml. Keeping each
-    annotator in a separate directory prevents the second annotation from
-    overwriting the first and makes the two-rater design inspectable.
-    """
+    """Load the blinded primary annotations, grouped by trial."""
     grouped: dict[str, list[dict[str, Any]]] = {}
     human_root = root / "runs" / "annotations" / "human"
     for p in sorted(human_root.glob("*/T-*.yaml")):
@@ -133,12 +128,23 @@ def _final_annotations(root: pathlib.Path, rule: dict[str, Any]) -> tuple[
 
     final: dict[str, dict[str, Any]] = {}
     pairs: list[tuple[dict[str, Any], dict[str, Any]]] = []
+    study_raters: tuple[str, str] | None = None
+
     for trial_id in sorted(expected):
         anns = grouped[trial_id]
         if len(anns) != 2:
             raise SystemExit(f"{trial_id}: expected exactly two primary human annotations, found {len(anns)}")
-        if anns[0]["annotator"] == anns[1]["annotator"]:
+        ids = tuple(sorted(a["annotator"] for a in anns))
+        if ids[0] == ids[1]:
             raise SystemExit(f"{trial_id}: primary annotations must come from distinct annotators")
+        if study_raters is None:
+            study_raters = ids
+        elif ids != study_raters:
+            raise SystemExit(
+                f"{trial_id}: rater pair {ids} differs from the study rater pair {study_raters}; "
+                "Cohen's kappa requires a consistent pair"
+            )
+
         a, b = sorted(anns, key=lambda x: x["annotator"])
         pairs.append((a, b))
         if a["observations"] == b["observations"]:
@@ -154,11 +160,24 @@ def _final_annotations(root: pathlib.Path, rule: dict[str, Any]) -> tuple[
     return final, pairs
 
 
+def _reported_model(env: dict[str, Any]) -> tuple[str, str, list[str | None]]:
+    """Use the provider-reported model for stratification when it is stable."""
+    requested = env["model"]["requested"]
+    resolved = env["model"]["resolved_per_call"]
+    unique = set(resolved)
+    if len(unique) == 1 and resolved[0]:
+        return resolved[0], requested, resolved
+    if unique == {None}:
+        return requested, requested, resolved
+    rendered = ",".join("null" if x is None else str(x) for x in resolved)
+    return f"mixed[{rendered}]", requested, resolved
+
+
 def cmd_score(a: argparse.Namespace, root: pathlib.Path) -> int:
     rule = load_rule(root / "protocol" / "scoring.yaml")
     scen = {s.id: s for s in load_all(root / "protocol" / "scenarios")}
 
-    # Complete blinding checks and adjudication BEFORE reading raw envelopes,
+    # Complete annotation checks and adjudication BEFORE reading raw envelopes,
     # because those envelopes reveal model and condition.
     final, pairs = _final_annotations(root, rule)
     agreement = agreement_summary(pairs, PROPAGATION_FIELDS)
@@ -174,12 +193,15 @@ def cmd_score(a: argparse.Namespace, root: pathlib.Path) -> int:
     for trial_id, ann in sorted(final.items()):
         env = envs[trial_id]
         c = score(scen[env["scenario_id"]].authority, ann, rule)
+        model, requested, resolved = _reported_model(env)
         rows.append({
             "trial_id": trial_id,
             "annotator": ann["annotator"],
             "condition": env["condition"],
             "scenario_id": env["scenario_id"],
-            "model": env["model"]["requested"],
+            "model": model,
+            "model_requested": requested,
+            "model_resolved_per_call": resolved,
             "fault_injected": env["fault_injected"],
             "classification": c.value,
             "observations": ann["observations"],
