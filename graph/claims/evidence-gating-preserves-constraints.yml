@@ -1,0 +1,9 @@
+id: claim/evidence-gating-preserves-constraints
+type: Claim
+title: Evidence-gated state preserves principal constraints
+state: candidate
+confidence: assumed
+context_tags:
+- hypothesis
+body: H2. Evidence-gated workflows preserve legitimate human-authored constraints across persistence boundaries
+  more reliably than narrative-memory workflows.

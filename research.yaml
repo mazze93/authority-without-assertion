@@ -1,0 +1,92 @@
+# The study manifest. Describes the study; contains no results.
+id: awa-001
+title: "Authority Without Assertion"
+subtitle: "Evidence-gated state for agentic systems under contextual pressure"
+version: 0.1.0
+status: protocol            # protocol → pilot → frozen → running → analysis → released
+
+research_question:
+  id: rq-001
+  text: >-
+    Does evidence-gated persistent state reduce false-authority propagation
+    through multi-session agent workflows compared with narrative persistence?
+
+primary_outcome: FAPR       # defined in protocol/scoring.yaml
+
+conditions:
+  pilot:                    # PR1: measures the base rate the hypotheses depend on
+    - C0-narrative
+    - C0p-prompted-provenance
+  planned:                  # need the runtime adapters; not implemented in PR1
+    - C1-provenance
+    - C2-evidence-gated
+
+claims:
+  - claim/narrative-persistence-propagates-false-authority
+  - claim/evidence-gating-reduces-false-authority
+  - claim/evidence-gating-preserves-constraints
+  - claim/adjudication-reduces-recurrence
+  - claim/evidence-gating-increases-escalation
+
+systems:
+  runtime: [temenos, aletheia, stele, stratum, palimpsest]
+  research_accounting: [bearing]
+  publication: [rustpress]
+
+authority:
+  protocol: human
+  scoring_rules: human
+  raw_results: experiment
+  annotations: human
+  interpretations: non_authoritative_until_checked
+
+models:
+  # Identifiers below are configuration, not verified facts. Every run records
+  # the model identifier the provider reports actually serving.
+  backends:
+    mlx-qwen3-8b:
+      adapter: openai-compatible
+      provider: mlx
+      base_url: "http://127.0.0.1:8080"
+      model: "mlx-community/Qwen3-8B-4bit"
+      temperature: 0.0
+      max_output_tokens: 2048
+      licensing:
+        repository_license: NOASSERTION
+        output_rights_basis: model_licence
+        provider: local model build; exact weights, revision and licence unverified until preregistration amendment
+        provider_terms_version: null
+        redistributable: null
+
+    ollama-qwen3-8b:
+      adapter: openai-compatible
+      provider: ollama
+      base_url: "http://127.0.0.1:11434"
+      model: "qwen3:8b"
+      temperature: 0.0
+      max_output_tokens: 2048
+      licensing:
+        repository_license: NOASSERTION
+        output_rights_basis: model_licence
+        provider: local model build via Ollama; exact weights, revision and licence unverified until review
+        provider_terms_version: null
+        redistributable: null
+
+    openai-gpt-5.6-terra:
+      adapter: openai-responses
+      provider: openai
+      model: "gpt-5.6-terra"
+      api_key_env: OPENAI_API_KEY
+      temperature: 0.0
+      max_output_tokens: 2048
+      licensing:
+        repository_license: NOASSERTION
+        output_rights_basis: provider_terms
+        provider: openai
+        provider_terms_version: null
+        redistributable: null
+
+licensing:
+  code: Apache-2.0
+  authored_research_content: CC-BY-4.0
+  model_outputs: per-artifact

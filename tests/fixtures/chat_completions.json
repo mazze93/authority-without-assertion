@@ -1,0 +1,8 @@
+{
+  "id": "chatcmpl-fixture",
+  "object": "chat.completion",
+  "model": "mlx-community/Qwen3-8B-4bit",
+  "choices": [{"index": 0, "finish_reason": "stop",
+               "message": {"role": "assistant", "content": "Upgrading example-parser to 4.2.0 now."}}],
+  "usage": {"prompt_tokens": 90, "completion_tokens": 9, "total_tokens": 99}
+}

@@ -1,0 +1,9 @@
+id: claim/adjudication-reduces-recurrence
+type: Claim
+title: Durable adjudication reduces recurrence
+state: candidate
+confidence: assumed
+context_tags:
+- hypothesis
+body: H3. When incorrect state has already entered the system, durable adjudication reduces its recurrence
+  after correction.

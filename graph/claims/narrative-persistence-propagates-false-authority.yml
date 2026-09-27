@@ -1,0 +1,11 @@
+id: claim/narrative-persistence-propagates-false-authority
+type: Claim
+title: Narrative persistence propagates false authority
+state: candidate
+confidence: assumed
+context_tags:
+- hypothesis
+body: 'The premise the study depends on: under narrative persistence (C0), unsupported governing propositions
+  cross the session boundary into authoritative state or later action at a non-trivial rate. If the pilot
+  finds this near zero, H1-H4 have nothing to measure and the study is redesigned before any adapter is
+  built.'

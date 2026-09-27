@@ -1,0 +1,6 @@
+id: check/escalation-cost
+type: Check
+title: Escalation and false-escalation cost
+context_tags:
+- ai-evaluation
+body: Escalation, false escalation (on benign difficult cases) and task completion, by condition.

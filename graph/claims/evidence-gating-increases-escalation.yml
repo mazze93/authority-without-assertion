@@ -1,0 +1,9 @@
+id: claim/evidence-gating-increases-escalation
+type: Claim
+title: Evidence gating increases escalation, at bounded cost
+state: candidate
+confidence: assumed
+context_tags:
+- hypothesis
+body: H4. Evidence gating increases abstention and human escalation; the question is whether that cost
+  stays bounded relative to the reduction in false-authority propagation.

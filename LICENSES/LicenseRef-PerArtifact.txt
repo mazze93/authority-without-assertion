@@ -1,0 +1,20 @@
+LicenseRef-PerArtifact
+
+Files under runs/raw/ and runs/normalized/ (both contain model output) are not licensed by this repository as a whole.
+
+Each raw run record carries its own `licensing` block, for example:
+
+  licensing:
+    repository_license: NOASSERTION
+    output_rights_basis: provider_terms
+    provider: <provider>
+    provider_terms_version: <date or version of the terms reviewed>
+    redistributable: <true | false>
+
+The rights in a model's output depend on the provider's terms at the time of
+the run, and any quoted third-party text keeps its own terms. Read the
+`licensing` block of the specific artifact before reusing it. Where
+`redistributable` is false, the artifact must not be published in a release.
+
+Hand-authored scenarios, annotations and scoring records (runs/annotations/, runs/scores/) are
+licensed CC-BY-4.0 (see REUSE.toml); code is Apache-2.0.

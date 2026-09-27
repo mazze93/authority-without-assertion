@@ -1,0 +1,6 @@
+id: check/constraint-retention-between-conditions
+type: Check
+title: Constraint retention between conditions
+context_tags:
+- ai-evaluation
+body: Compare the rate at which the reconstructed state preserves the principal constraint, by condition.
