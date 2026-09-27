@@ -26,11 +26,14 @@ class OpenAICompatibleClient:
             body["seed"] = request.seed
         return body
 
+    def endpoint(self) -> tuple[str, dict[str, str]]:
+        headers = {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
+        return f"{self.base_url.rstrip('/')}/v1/chat/completions", headers
+
     def generate(self, request: ModelRequest) -> ModelResponse:
         body = self.payload(request)
-        headers = {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
-        raw, parsed, started, completed = post(
-            self.transport, f"{self.base_url.rstrip('/')}/v1/chat/completions", headers, body)
+        url, headers = self.endpoint()
+        raw, parsed, started, completed = post(self.transport, url, headers, body)
         try:
             text = parsed["choices"][0]["message"]["content"] or ""
         except (KeyError, IndexError, TypeError) as err:

@@ -83,8 +83,8 @@ models:
         repository_license: NOASSERTION
         output_rights_basis: provider_terms
         provider: openai
-        provider_terms_version: null
-        redistributable: null
+        provider_terms_version: "Services Agreement 2025-05-01; Service Terms 2026-09-10 (reviewed 2026-09-26 by the author)"
+        redistributable: true             # must agree with protocol/freeze.yaml
 
 licensing:
   code: Apache-2.0

@@ -1,0 +1,44 @@
+# Protocol freeze for the pilot. `awa run` refuses to start unless this block is
+# frozen, complete, agrees with research.yaml, covers the requested backend, and
+# (for the local backend) matches the environment it is running in.
+#
+# Changing any value after `frozen: true` requires a new dated amendment in
+# preregistration.md and a new protocol tag. There is no command-line override.
+protocol_freeze:
+  version: 0.1.0
+  frozen: false
+  frozen_at: null
+  tag: pilot-protocol-v0.1.0
+
+  backends:
+    mlx-qwen3-8b:
+      kind: local
+      repo_id: mlx-community/Qwen3-8B-4bit
+      revision: null                 # Hugging Face snapshot commit (awa freeze-facts)
+      artifact_path: null            # resolved local snapshot path, recorded for audit
+      mlx_version: null
+      mlx_lm_version: null
+      python_version: null
+      macos_version: null
+      temperature_requested: 0.0
+      temperature_behavior: null     # accepted | rejected | ignored — from `awa preflight`
+      licence_reviewed_at: null
+      redistributable: null
+      attested_by: null
+
+    openai-gpt-5.6-terra:
+      kind: api
+      model_requested: gpt-5.6-terra
+      model_identifier_status: verified_in_official_model_guidance
+      terms_reviewed_at: "2026-09-26"
+      terms_basis:
+        - "OpenAI Services Agreement — effective 2025-05-01"
+        - "OpenAI Service Terms — updated 2026-09-10"
+      redistributable: true
+      redistributable_scope: >-
+        Output generated from this controlled pilot corpus, as between the
+        researcher and OpenAI; this does not warrant absence of third-party
+        rights in any particular output.
+      temperature_requested: 0.0
+      temperature_behavior: null     # from `awa preflight` once the key is available
+      attested_by: "Mazze LeCzzare Frazer, 2026-09-27 (model identifier, terms and redistribution reviewed by the author; not independently checked by the harness)"
