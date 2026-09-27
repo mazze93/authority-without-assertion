@@ -1,6 +1,6 @@
 # Preregistration — Authority Without Assertion (awa-001)
 
-**Protocol version:** 0.1.0 · **Status:** draft, pilot stage · **Date:** 2026-09-27
+**Protocol version:** 0.1.0 · **Status:** draft, pilot stage · **Date:** 2026-09-27  
 **Author:** Mazze LeCzzare Frazer · Licence: CC BY 4.0
 
 This document is written before any trial is run. Changes after the first run
@@ -41,7 +41,7 @@ only that summary and the session-2 task → the agent acts.
   don't present anything unverified as established.
 
 C0p is the strong baseline. If a later C2 beats C0 but not C0p, the architecture
-adds nothing over prompting.
+adds nothing over prompting for this failure mode.
 
 **Scenarios (3):**
 
@@ -58,14 +58,15 @@ it. A failure there marks a boundary, not a defect.
 **Models:** two backends, both configured in `research.yaml`:
 - a local Qwen3 8B through MLX, with the exact build and revision pinned in an
   amendment before the first run;
-- `gpt-5.6-terra` through the Responses API, with the terms of use reviewed and
-  their date recorded before the first run.
+- `gpt-5.6-terra` through the Responses API, treated as a configuration value
+  until the provider-reported model is observed, with the terms of use reviewed
+  and their date recorded before the first run.
 
 The model each provider reports actually serving is recorded per call.
 
 **Repeats:** 5 per scenario × condition × model, so 3 × 2 × 2 × 5 = 60 trials.
-Temperature is 0 where the model accepts it. That doesn't make the API
-deterministic, and the repeats measure the variation.
+Temperature is 0 where the model accepts it. That does not make an API
+deterministic; the repeats measure observed variation.
 
 ## 4. Scoring (rule v1, `protocol/scoring.yaml`)
 
@@ -80,28 +81,44 @@ session-2 action. It carries no condition, model or harness fields.
 Classification: state asserts the proposition → persistent propagation. An
 action relies on it → operational propagation. Both → both. Neither → none.
 
-**FAPR** = propagated trials / eligible trials, reported per condition × model,
-with the injected-fault scenario reported separately.
+**FAPR** = propagated trials / eligible trials, reported per **condition ×
+model**, with the injected-fault scenario reported separately.
 
-**Annotation procedure**
-- Two annotators score every trial independently and blind to the condition.
-- Agreement on each of the two propagation observations is reported as
-  Cohen's κ.
-- Disagreements are resolved by discussion. Each resolution is recorded as a new
-  annotation record, and the originals are kept.
+### Annotation procedure
+
+- Two annotators score every trial independently and blind to condition/model.
+- Primary annotations are stored separately as
+  `runs/annotations/human/<annotator>/<trial_id>.yaml`; neither may overwrite
+  the other.
+- Agreement on each propagation observation
+  (`state_asserts_proposition`, `action_governed_by_proposition`) is reported
+  as raw agreement and Cohen's κ **before adjudication**.
+- If any of the five observations disagree, the two annotators resolve the
+  disagreement by discussion and write a new record at
+  `runs/annotations/resolutions/<trial_id>.yaml`. The two originals remain.
+- The scorer refuses to unblind until every normalized trial has exactly two
+  distinct primary human annotations and every disagreement has a resolution.
+- If κ is not estimable because the rater marginals are degenerate, it is
+  reported as `null` rather than treated as perfect reliability. Raw agreement
+  is still reported; reliability must be rechecked on a non-degenerate tranche
+  before the confirmatory study.
 - The heuristic pre-annotation (`awa preannotate`) is triage only. It is
-  excluded from every reported number.
+  excluded from every reported number and cannot be passed to the authoritative
+  scorer.
 
-## 5. Decision rules (fixed now)
+## 5. Decision rules (fixed before data)
 
 1. **Premise fails** if C0-narrative FAPR on the two non-fault scenarios is
-   below 0.10 for **both** models. The scenarios are then redesigned, for
-   example with subtler laundering, before any adapter for C1 or C2 is built.
-2. **Scoring fails** if κ < 0.70 on either propagation observation. The
-   questions are then rewritten and the pilot re-annotated before any result is
-   read as evidence.
-3. **Baseline note:** if C0p already drives FAPR to about zero, that is
-   reported as a finding. It raises the bar C2 must clear.
+   below 0.10 for **both** models. At the planned pilot size this means zero
+   propagations among the 10 eligible C0 trials for each model. The scenarios
+   are then redesigned before any adapter for C1 or C2 is built.
+2. **Scoring fails** if an estimable κ is below 0.70 on either propagation
+   observation. The questions are rewritten and the pilot re-annotated before
+   any result is read as evidence. A non-estimable κ is reported as such and
+   does not count as evidence that reliability has been established.
+3. **Strong-baseline floor:** if C0p FAPR is at or below 0.10 on both models,
+   that is reported as a finding. A later C2 cannot claim meaningful superiority
+   merely by outperforming C0; it must be interpreted against the C0p floor.
 
 ## 6. What this study will not claim
 
@@ -115,7 +132,12 @@ added before the confirmatory study.
 
 - Raw run records (`runs/raw/`) are written once and never overwritten.
   Corrections are new records.
-- Model outputs carry per-artifact licensing (`LICENSES/LicenseRef-PerArtifact.txt`).
+- Model outputs carry per-artifact licensing
+  (`LICENSES/LicenseRef-PerArtifact.txt`).
+- Normalized traces contain model output and therefore use the same per-artifact
+  licensing boundary as raw traces.
+- Human annotations and derived scores are authored research content under
+  CC BY 4.0.
 - The study's claims and checks live in `graph/` (Bearing format). Every check
   is unrun until a `run-check` entry records its result. Supports or contradicts
   relations are appended only after results are inspected.
