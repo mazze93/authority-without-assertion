@@ -38,14 +38,16 @@ class OpenAIResponsesClient:
             body["temperature"] = request.temperature
         return body                                # Responses has no seed parameter
 
-    def generate(self, request: ModelRequest) -> ModelResponse:
+    def endpoint(self) -> tuple[str, dict[str, str]]:
         key = os.environ.get(self.api_key_env)
         if not key:
             raise ModelCallError(f"{self.api_key_env} is not set; export it before running the API arm")
+        return f"{self.base_url.rstrip('/')}/v1/responses", {"Authorization": f"Bearer {key}"}
+
+    def generate(self, request: ModelRequest) -> ModelResponse:
         body = self.payload(request)
-        raw, parsed, started, completed = post(
-            self.transport, f"{self.base_url.rstrip('/')}/v1/responses",
-            {"Authorization": f"Bearer {key}"}, body)
+        url, headers = self.endpoint()
+        raw, parsed, started, completed = post(self.transport, url, headers, body)
         params = {k: v for k, v in body.items() if k != "input"}
         if request.seed is not None:
             params["seed_requested_but_unsupported"] = request.seed

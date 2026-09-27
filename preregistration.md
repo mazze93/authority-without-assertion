@@ -144,7 +144,17 @@ added before the confirmatory study.
 
 ## Amendments
 
-*None yet.* Before the first pilot run, an amendment must record:
-- the pinned MLX model build and revision;
-- the date of the OpenAI terms reviewed;
+*None yet.* Before the first pilot run, an amendment must record the values
+now held in `protocol/freeze.yaml`:
+- the MLX model repo id and snapshot revision;
+- the `mlx`, `mlx-lm`, Python and macOS versions;
+- each backend's temperature behaviour, from a non-study preflight probe;
+- the date of the terms or licence review;
 - each backend's `redistributable` value.
+
+`awa run` enforces the freeze: it refuses to start unless the freeze is marked
+frozen, complete, consistent with `research.yaml`, matched by the running
+environment, and executed from the exact tracked source state carrying the
+frozen protocol tag. Preflight probes are capability checks, not trials. Each
+probe is preserved as a separate append-only artifact in `preflight/`; none
+enter FAPR.

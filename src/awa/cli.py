@@ -1,6 +1,9 @@
 """awa — pilot command line.
 
+  awa freeze-facts --backend mlx-qwen3-8b   print this environment's facts for protocol/freeze.yaml
+  awa preflight --backend NAME           one non-study call: how the backend treats temperature
   awa run --backend mlx-qwen3-8b --condition C0-narrative [--scenario ID ...] [--repeats N]
+                             refuses to start unless protocol/freeze.yaml passes (see freeze.py)
   awa preannotate            heuristic triage for every unannotated normalized trace
   awa score                  validate two human annotations per trial, adjudicate, unblind, score
 
@@ -18,6 +21,8 @@ from typing import Any
 import yaml
 
 from .models import OpenAICompatibleClient, OpenAIResponsesClient
+from . import freeze, preflight
+from .models.base import http_post_json
 from .runner import CONDITIONS, run_trial
 from .runner.run import write_records
 from .scenario import load_all
@@ -56,6 +61,13 @@ def cmd_run(a: argparse.Namespace, root: pathlib.Path) -> int:
     backend = backends[a.backend]
     if a.condition not in CONDITIONS:
         raise SystemExit(f"condition must be one of {', '.join(CONDITIONS)}")
+    fz = freeze.load_freeze(root)
+    entry = (fz.get("backends") or {}).get(a.backend) or {}
+    facts = freeze.collect_local_facts(entry["repo_id"]) if entry.get("kind") == "local" else None
+    source_facts = freeze.collect_source_facts(root)
+    problems = freeze.check(fz, m, a.backend, facts, source_facts)
+    if problems:
+        raise SystemExit("refusing to run — the protocol freeze does not pass:\n  - " + "\n  - ".join(problems))
     scenarios = [s for s in load_all(root / "protocol" / "scenarios")
                  if not a.scenario or s.id in a.scenario]
     client = make_client(backend)
@@ -67,6 +79,29 @@ def cmd_run(a: argparse.Namespace, root: pathlib.Path) -> int:
             env = write_records(trial, root / "runs", backend["licensing"])
             print(f"{env['run_id']}  {s.id}  {a.condition}  repeat {i + 1}/{a.repeats}")
     return 0
+
+
+def cmd_freeze_facts(a: argparse.Namespace, root: pathlib.Path) -> int:
+    backend = manifest(root)["models"]["backends"].get(a.backend)
+    if backend is None or backend.get("adapter") != "openai-compatible":
+        raise SystemExit("freeze-facts is for local backends in research.yaml")
+    facts = freeze.collect_local_facts(backend["model"])
+    print(yaml.safe_dump({a.backend: facts}, sort_keys=False).rstrip())
+    missing = [k for k, v in facts.items() if v is None]
+    if missing:
+        print(f"# not found in this environment: {', '.join(missing)}", file=sys.stderr)
+    return 0
+
+
+def cmd_preflight(a: argparse.Namespace, root: pathlib.Path) -> int:
+    backend = manifest(root)["models"]["backends"].get(a.backend)
+    if backend is None:
+        raise SystemExit(f"backend '{a.backend}' not in research.yaml")
+    record = preflight.probe(make_client(backend), http_post_json)
+    path = preflight.write(record, root, a.backend)
+    print(f"{a.backend}: HTTP {record['status']} -> temperature_behavior: {record['temperature_behavior']}")
+    print(f"recorded in {path.relative_to(root)} (not a trial; excluded from every FAPR calculation)")
+    return 0 if record["temperature_behavior"] != "error" else 1
 
 
 def cmd_preannotate(a: argparse.Namespace, root: pathlib.Path) -> int:
@@ -230,10 +265,15 @@ def main(argv: list[str] | None = None, root: pathlib.Path = ROOT) -> int:
     r.add_argument("--condition", required=True)
     r.add_argument("--scenario", action="append", help="scenario id (repeatable); default all")
     r.add_argument("--repeats", type=int, default=1)
+    f = sub.add_parser("freeze-facts", help="print local environment facts for the freeze")
+    f.add_argument("--backend", required=True)
+    pf = sub.add_parser("preflight", help="one non-study temperature probe")
+    pf.add_argument("--backend", required=True)
     sub.add_parser("preannotate", help="heuristic triage of unannotated traces")
     sub.add_parser("score", help="validate two human annotations per trial, adjudicate, unblind and score")
     a = p.parse_args(argv)
-    return {"run": cmd_run, "preannotate": cmd_preannotate, "score": cmd_score}[a.cmd](a, root)
+    return {"run": cmd_run, "freeze-facts": cmd_freeze_facts, "preflight": cmd_preflight,
+            "preannotate": cmd_preannotate, "score": cmd_score}[a.cmd](a, root)
 
 
 if __name__ == "__main__":

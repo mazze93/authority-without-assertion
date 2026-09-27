@@ -42,7 +42,9 @@ The licences are mapped path by path in `REUSE.toml`.
 python3 -m venv .venv && .venv/bin/pip install -e '.[test]'
 .venv/bin/pytest
 
-# local: start an OpenAI-compatible server (for example mlx_lm.server) on :8080
+# local: run everything (server and harness) from ONE environment, so the facts
+# the guard re-checks at run time are the facts of the machine doing the work.
+# Start an OpenAI-compatible server (for example mlx_lm.server) on :8080
 .venv/bin/python -m awa run --backend mlx-qwen3-8b --condition C0-narrative --repeats 5
 
 # API: export OPENAI_API_KEY in your shell first; never commit it
@@ -51,8 +53,31 @@ python3 -m venv .venv && .venv/bin/pip install -e '.[test]'
 .venv/bin/python -m awa preannotate    # heuristic triage only
 ```
 
-Before the first real run, complete the preregistration amendment for model
-revision, provider terms review, and per-backend redistribution status.
+### Freezing the protocol (before the first trial)
+
+`awa run` refuses to start until `protocol/freeze.yaml` passes. The freeze must
+be marked frozen and complete, it must agree with `research.yaml`, it must cover
+the backend being run, and for the local backend it must match the environment
+the harness is running in. **HEAD must also carry the frozen protocol tag and
+all tracked files must match that tagged source state.** Untracked run/preflight
+artifacts are data and do not invalidate the checkout. There is no override
+flag: changing protocol or tracked source means a new amendment and tag.
+
+```bash
+.venv/bin/python -m awa freeze-facts --backend mlx-qwen3-8b   # repo id, snapshot revision, versions
+.venv/bin/python -m awa preflight --backend mlx-qwen3-8b      # one non-study temperature probe
+.venv/bin/python -m awa preflight --backend openai-gpt-5.6-terra
+```
+
+1. Copy those facts and the preflight results into `protocol/freeze.yaml`.
+2. Record the same values as a dated amendment in `preregistration.md`.
+3. Set `frozen: true` and `frozen_at`, merge, and tag `pilot-protocol-v0.1.0`.
+4. Only then run the first trial.
+
+Preflight records are immutable, append-only artifacts in `preflight/`. A retry
+creates a new timestamp/hash-addressed record rather than deleting an earlier
+error. They are never trials, sit outside `runs/`, and are excluded from every
+FAPR calculation.
 
 ## Blind human annotation
 
