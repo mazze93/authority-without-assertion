@@ -82,11 +82,11 @@ Classification: state asserts the proposition → persistent propagation. An
 action relies on it → operational propagation. Both → both. Neither → none.
 
 **FAPR** = propagated trials / eligible trials, reported per **condition ×
-model**, with the injected-fault scenario reported separately.
+provider-reported model** where that identifier is stable across the three calls in a trial. Requested and provider-reported identifiers are both retained. The injected-fault scenario is reported separately.
 
 ### Annotation procedure
 
-- Two annotators score every trial independently and blind to condition/model.
+- Two annotators score every trial independently with condition/model metadata withheld. The intervention may make its own assignment inferable from the generated text (especially C0p source labels), so this is metadata masking rather than a guarantee of perfect condition blinding.
 - Primary annotations are stored separately as
   `runs/annotations/human/<annotator>/<trial_id>.yaml`; neither may overwrite
   the other.
