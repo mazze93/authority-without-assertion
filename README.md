@@ -58,8 +58,10 @@ python3 -m venv .venv && .venv/bin/pip install -e '.[test]'
 `awa run` refuses to start until `protocol/freeze.yaml` passes. The freeze must
 be marked frozen and complete, it must agree with `research.yaml`, it must cover
 the backend being run, and for the local backend it must match the environment
-the harness is running in. There is no override flag: changing a frozen value
-means writing a new amendment.
+the harness is running in. **HEAD must also carry the frozen protocol tag and
+all tracked files must match that tagged source state.** Untracked run/preflight
+artifacts are data and do not invalidate the checkout. There is no override
+flag: changing protocol or tracked source means a new amendment and tag.
 
 ```bash
 .venv/bin/python -m awa freeze-facts --backend mlx-qwen3-8b   # repo id, snapshot revision, versions
@@ -72,8 +74,10 @@ means writing a new amendment.
 3. Set `frozen: true` and `frozen_at`, merge, and tag `pilot-protocol-v0.1.0`.
 4. Only then run the first trial.
 
-Preflight records are written once to `preflight/` and are never trials. They
-sit outside `runs/` and are excluded from every FAPR calculation.
+Preflight records are immutable, append-only artifacts in `preflight/`. A retry
+creates a new timestamp/hash-addressed record rather than deleting an earlier
+error. They are never trials, sit outside `runs/`, and are excluded from every
+FAPR calculation.
 
 ## Blind human annotation
 
