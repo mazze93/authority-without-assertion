@@ -109,7 +109,7 @@ def test_end_to_end_score_requires_two_raters_then_unblinds(tmp_path, scripted):
     assert main(["score"], root=tmp_path) == 0
     summary = json.loads((tmp_path / "runs" / "scores" / "summary.json").read_text())
     assert summary["scored_trials"] == 1
-    assert summary["by_condition_model"]["C0-narrative|scripted|main"]["fapr"] == 1.0
+    assert summary["by_condition_model"]["C0-narrative|scripted-v1-resolved|main"]["fapr"] == 1.0
     # Both raters gave the same label on the only item: raw agreement is known,
     # but kappa is correctly non-estimable for the degenerate marginal.
     assert summary["agreement"]["state_asserts_proposition"]["raw_agreement"] == 1.0
