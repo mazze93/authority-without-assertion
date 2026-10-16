@@ -25,6 +25,10 @@ SOURCE = {
     "head": "deadbeef",
     "tags_at_head": ["pilot-protocol-v0.1.0"],
     "tracked_dirty": False,
+    "tag_type": "tag",
+    "tag_object": "cafef00d",
+    "untracked_protocol_files": [],
+    "worktree_mismatch": [],
 }
 
 
@@ -113,6 +117,39 @@ def test_tracked_source_drift_is_refused_but_untracked_data_is_outside_this_chec
     )
 
 
+def test_untracked_protocol_files_are_refused():
+    source = {**SOURCE, "untracked_protocol_files": ["protocol/scenarios/draft.yaml"]}
+    assert any(
+        "untracked files" in p and "draft.yaml" in p
+        for p in check(frozen(), manifest(), "openai-gpt-5.6-terra", source=source)
+    )
+
+
+def test_content_drift_hidden_from_status_is_refused():
+    source = {**SOURCE, "tracked_dirty": False, "worktree_mismatch": ["research.yaml"]}
+    assert any(
+        "tracked files differ" in p and "research.yaml" in p
+        for p in check(frozen(), manifest(), "openai-gpt-5.6-terra", source=source)
+    )
+
+
+def test_a_lightweight_tag_is_refused():
+    source = {**SOURCE, "tag_type": "commit"}
+    assert any(
+        "annotated tag" in p
+        for p in check(frozen(), manifest(), "openai-gpt-5.6-terra", source=source)
+    )
+
+
+@pytest.mark.parametrize("key", ["untracked_protocol_files", "worktree_mismatch"])
+def test_uncollected_source_facts_fail_closed(key):
+    source = {**SOURCE, key: None}
+    assert any(
+        "could not establish git checkout identity" in p
+        for p in check(frozen(), manifest(), "openai-gpt-5.6-terra", source=source)
+    )
+
+
 def test_missing_git_identity_fails_closed():
     source = {"head": None, "tags_at_head": None, "tracked_dirty": None}
     assert any(
@@ -127,6 +164,41 @@ def test_temperature_must_match_the_recorded_behavior():
     assert any("temperature: null" in p for p in check(fz, manifest(), "openai-gpt-5.6-terra"))
     fz["backends"]["openai-gpt-5.6-terra"]["temperature_behavior"] = None
     assert any("awa preflight" in p for p in check(fz, manifest(), "openai-gpt-5.6-terra"))
+
+
+def test_guard_and_runner_read_the_same_temperature():
+    m = manifest()
+    del m["models"]["backends"]["openai-gpt-5.6-terra"]["temperature"]
+    fz = frozen()
+    fz["backends"]["openai-gpt-5.6-terra"]["temperature_behavior"] = "rejected"
+    # With the key absent the run omits temperature, so a 'rejected' freeze passes ...
+    assert freeze.requested_temperature(m["models"]["backends"]["openai-gpt-5.6-terra"]) is None
+    assert check(fz, m, "openai-gpt-5.6-terra") == []
+    # ... and an 'accepted' freeze of 0.0 does not, because nothing would be sent.
+    fz["backends"]["openai-gpt-5.6-terra"]["temperature_behavior"] = "accepted"
+    assert any("sends temperature None" in p for p in check(fz, m, "openai-gpt-5.6-terra"))
+
+
+def _env(run_id, **protocol):
+    stamp = None if protocol.get("absent") else {
+        "freeze_version": "0.1.0", "tag": "pilot-protocol-v0.1.0",
+        "tag_object": "cafef00d", "head": "deadbeef", **protocol,
+    }
+    return {"run_id": run_id, "protocol": stamp}
+
+
+def test_scoring_refuses_unstamped_or_mixed_records():
+    assert freeze.stamp_problems({"T-1": _env("R-1"), "T-2": _env("R-2")}) == []
+    unstamped = freeze.stamp_problems({"T-1": _env("R-1"), "T-2": _env("R-2", absent=True)})
+    assert len(unstamped) == 1 and "R-2" in unstamped[0] and "no protocol stamp" in unstamped[0]
+    mixed = freeze.stamp_problems({"T-1": _env("R-1"), "T-2": _env("R-2", head="0ther")})
+    assert len(mixed) == 1 and "more than one protocol identity" in mixed[0]
+
+
+def test_stamp_records_what_the_guard_admitted():
+    s = freeze.stamp(frozen(), "mlx-qwen3-8b", FACTS, SOURCE)
+    assert s["tag_object"] == "cafef00d" and s["head"] == "deadbeef"
+    assert s["frozen_at"] == "2026-09-27" and s["local_facts"] == FACTS
 
 
 def test_run_refuses_before_any_model_call(tmp_path):

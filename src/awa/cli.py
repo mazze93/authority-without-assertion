@@ -64,19 +64,20 @@ def cmd_run(a: argparse.Namespace, root: pathlib.Path) -> int:
     fz = freeze.load_freeze(root)
     entry = (fz.get("backends") or {}).get(a.backend) or {}
     facts = freeze.collect_local_facts(entry["repo_id"]) if entry.get("kind") == "local" else None
-    source_facts = freeze.collect_source_facts(root)
+    source_facts = freeze.collect_source_facts(root, fz.get("tag"))
     problems = freeze.check(fz, m, a.backend, facts, source_facts)
     if problems:
         raise SystemExit("refusing to run — the protocol freeze does not pass:\n  - " + "\n  - ".join(problems))
+    protocol = freeze.stamp(fz, a.backend, facts, source_facts)
     scenarios = [s for s in load_all(root / "protocol" / "scenarios")
                  if not a.scenario or s.id in a.scenario]
     client = make_client(backend)
     for s in scenarios:
         for i in range(a.repeats):
             trial = run_trial(s, CONDITIONS[a.condition], client,
-                              temperature=backend.get("temperature", 0.0),
+                              temperature=freeze.requested_temperature(backend),
                               max_output_tokens=backend.get("max_output_tokens", 2048))
-            env = write_records(trial, root / "runs", backend["licensing"])
+            env = write_records(trial, root / "runs", backend["licensing"], protocol=protocol)
             print(f"{env['run_id']}  {s.id}  {a.condition}  repeat {i + 1}/{a.repeats}")
     return 0
 
@@ -223,6 +224,9 @@ def cmd_score(a: argparse.Namespace, root: pathlib.Path) -> int:
         envs[e["trial_id"]] = e
     if set(envs) != set(final):
         raise SystemExit("raw envelopes and final annotations do not describe the same trial set")
+    unfrozen = freeze.stamp_problems(envs)
+    if unfrozen:
+        raise SystemExit("refusing to score — " + "; ".join(unfrozen))
 
     rows = []
     for trial_id, ann in sorted(final.items()):

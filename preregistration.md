@@ -155,6 +155,9 @@ now held in `protocol/freeze.yaml`:
 `awa run` enforces the freeze: it refuses to start unless the freeze is marked
 frozen, complete, consistent with `research.yaml`, matched by the running
 environment, and executed from the exact tracked source state carrying the
-frozen protocol tag. Preflight probes are capability checks, not trials. Each
+frozen protocol tag (annotated), with no untracked files among the protocol and
+source paths. Every raw run record is stamped with the tag object id and HEAD
+commit it ran from; scoring refuses unstamped records and records from more
+than one protocol identity. Preflight probes are capability checks, not trials. Each
 probe is preserved as a separate append-only artifact in `preflight/`; none
 enter FAPR.

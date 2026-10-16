@@ -58,10 +58,23 @@ python3 -m venv .venv && .venv/bin/pip install -e '.[test]'
 `awa run` refuses to start until `protocol/freeze.yaml` passes. The freeze must
 be marked frozen and complete, it must agree with `research.yaml`, it must cover
 the backend being run, and for the local backend it must match the environment
-the harness is running in. **HEAD must also carry the frozen protocol tag and
-all tracked files must match that tagged source state.** Untracked run/preflight
-artifacts are data and do not invalidate the checkout. There is no override
-flag: changing protocol or tracked source means a new amendment and tag.
+the harness is running in. **HEAD must also carry the frozen protocol tag, as an
+annotated tag (`git tag -a`), and every tracked file's content must match that
+tagged source state.** The guard hashes the files itself, so a skip-worktree or
+assume-unchanged flag does not hide an edit. Untracked or ignored files under
+`protocol/`, `src/` or `research.yaml` block the run, because a scenario glob or
+an import would load them without their being frozen; bytecode caches,
+`*.egg-info` and `.DS_Store` are exempt. Untracked run/preflight artifacts are
+data and do not invalidate the checkout. There is no override flag: changing
+protocol or tracked source means a new amendment and tag.
+
+Every raw run record carries a `protocol` stamp of what the guard admitted:
+freeze version, `frozen_at`, tag, tag object id, HEAD commit, backend and local
+facts. `awa score` refuses records without a stamp, and refuses a set whose
+stamps name more than one protocol identity. A local tag can still be moved;
+the stamp is what makes that visible afterwards, so record the tag object id
+(`git rev-parse refs/tags/pilot-protocol-v0.1.0`) in the amendment once the tag
+exists.
 
 ```bash
 .venv/bin/python -m awa freeze-facts --backend mlx-qwen3-8b   # repo id, snapshot revision, versions
@@ -71,7 +84,9 @@ flag: changing protocol or tracked source means a new amendment and tag.
 
 1. Copy those facts and the preflight results into `protocol/freeze.yaml`.
 2. Record the same values as a dated amendment in `preregistration.md`.
-3. Set `frozen: true` and `frozen_at`, merge, and tag `pilot-protocol-v0.1.0`.
+3. Set `frozen: true` and `frozen_at`, merge, and tag with
+   `git tag -a pilot-protocol-v0.1.0 -m "pilot protocol freeze"`. A lightweight
+   tag is refused.
 4. Only then run the first trial.
 
 Preflight records are immutable, append-only artifacts in `preflight/`. A retry
