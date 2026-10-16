@@ -1,6 +1,8 @@
 # Protocol freeze for the pilot. `awa run` refuses to start unless this block is
 # frozen, complete, agrees with research.yaml, covers the requested backend, and
-# (for the local backend) matches the environment it is running in.
+# (for the local backend) matches the environment it is running in. The checkout
+# must sit at the annotated `tag` below with no tracked-content drift and no
+# untracked files under protocol/, src/ or research.yaml.
 #
 # Changing any value after `frozen: true` requires a new dated amendment in
 # preregistration.md and a new protocol tag. There is no command-line override.
