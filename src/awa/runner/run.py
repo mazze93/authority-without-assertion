@@ -107,8 +107,15 @@ def _write_new(path: pathlib.Path, data: bytes) -> None:
 
 
 def write_records(trial: dict[str, Any], out_dir: str | pathlib.Path,
-                  licensing: dict[str, Any], run_id: str | None = None) -> dict[str, Any]:
-    """Persist raw envelope + events + normalized trace; append to the index."""
+                  licensing: dict[str, Any], run_id: str | None = None,
+                  protocol: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Persist raw envelope + events + normalized trace; append to the index.
+
+    `protocol` is the freeze stamp the guard admitted (freeze.stamp). It goes
+    only into the raw envelope, never the normalized trace, so blinding holds.
+    A record written without one is recorded as `protocol: null`, which
+    scoring refuses.
+    """
     out = pathlib.Path(out_dir)
     raw_dir, norm_dir = out / "raw", out / "normalized"
     raw_dir.mkdir(parents=True, exist_ok=True)
@@ -132,6 +139,7 @@ def write_records(trial: dict[str, Any], out_dir: str | pathlib.Path,
         "events": {"path": f"{run_id}.events.jsonl", "sha256": _sha(events)},
         "normalized": {"path": f"../normalized/{norm['trial_id']}.json", "sha256": _sha(norm_bytes)},
         "licensing": licensing,
+        "protocol": protocol,
         "scores": None,          # scores live in annotations, never in the raw record
     }
     _write_new(raw_dir / f"{run_id}.events.jsonl", events)

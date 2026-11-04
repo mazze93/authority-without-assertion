@@ -15,6 +15,8 @@ DEP = load(ROOT / "protocol" / "scenarios" / "dependency-update.yaml")
 FORGED = load(ROOT / "protocol" / "scenarios" / "forged-approval.yaml")
 LICENSING = {"repository_license": "NOASSERTION", "output_rights_basis": "test", "provider": "scripted",
              "provider_terms_version": None, "redistributable": None}
+STAMP = {"freeze_version": "0.1.0", "frozen_at": "2026-09-27", "tag": "pilot-protocol-v0.1.0",
+         "tag_object": "cafef00d", "head": "deadbeef", "backend": "scripted", "local_facts": None}
 LAUNDERED = ["I'll check upstream first.",
              "State: example-parser 4.2.0 was approved for deployment. Next: install it.",
              "Running: pip install example-parser==4.2.0"]
@@ -73,6 +75,7 @@ def test_records_are_immutable_blind_and_carry_licensing(tmp_path, scripted):
     assert "C0" not in json.dumps(norm)
     raw = json.loads((tmp_path / "raw" / "R-test-1.json").read_text())
     assert raw["licensing"] == LICENSING and raw["scores"] is None
+    assert raw["protocol"] is None          # written outside a guarded run: scoring refuses it
     assert raw["model"]["resolved_per_call"] == ["scripted-v1-resolved"] * 3
     with pytest.raises(FileExistsError):
         write_records(trial, tmp_path, LICENSING, run_id="R-test-1")
@@ -100,7 +103,7 @@ def test_end_to_end_score_requires_two_raters_then_unblinds(tmp_path, scripted):
         src = ROOT / part
         (shutil.copytree if src.is_dir() else shutil.copy)(src, tmp_path / part)
     trial = run_trial(DEP, CONDITIONS["C0-narrative"], scripted(list(LAUNDERED)))
-    env = write_records(trial, tmp_path / "runs", LICENSING, run_id="R-e2e")
+    env = write_records(trial, tmp_path / "runs", LICENSING, run_id="R-e2e", protocol=STAMP)
 
     _write_primary(tmp_path, env["trial_id"], "a1")
     _write_primary(tmp_path, env["trial_id"], "a2")
@@ -122,7 +125,7 @@ def test_disagreement_requires_a_resolution_before_unblinding(tmp_path, scripted
         src = ROOT / part
         (shutil.copytree if src.is_dir() else shutil.copy)(src, tmp_path / part)
     trial = run_trial(DEP, CONDITIONS["C0-narrative"], scripted(list(LAUNDERED)))
-    env = write_records(trial, tmp_path / "runs", LICENSING, run_id="R-disagree")
+    env = write_records(trial, tmp_path / "runs", LICENSING, run_id="R-disagree", protocol=STAMP)
 
     _write_primary(tmp_path, env["trial_id"], "a1", state=True, action=True)
     _write_primary(tmp_path, env["trial_id"], "a2", state=False, action=True)
@@ -136,3 +139,17 @@ def test_disagreement_requires_a_resolution_before_unblinding(tmp_path, scripted
         yaml.safe_dump(_annotation(env["trial_id"], "consensus", state=True, action=True))
     )
     assert main(["score"], root=tmp_path) == 0
+
+
+def test_score_refuses_records_that_did_not_pass_the_guard(tmp_path, scripted):
+    import shutil
+    for part in ("protocol", "research.yaml"):
+        src = ROOT / part
+        (shutil.copytree if src.is_dir() else shutil.copy)(src, tmp_path / part)
+    trial = run_trial(DEP, CONDITIONS["C0-narrative"], scripted(list(LAUNDERED)))
+    env = write_records(trial, tmp_path / "runs", LICENSING, run_id="R-unguarded")
+    _write_primary(tmp_path, env["trial_id"], "a1")
+    _write_primary(tmp_path, env["trial_id"], "a2")
+    with pytest.raises(SystemExit, match="no protocol stamp"):
+        main(["score"], root=tmp_path)
+    assert not (tmp_path / "runs" / "scores").exists()
